@@ -1,0 +1,24 @@
+{
+    "mcpServers": {
+      "fetch": {
+        "type": "stdio",
+        "command": "uvx",
+        "args": [
+          "mcp-server-fetch"          
+        ]
+      },
+      "filesystem": {
+        "type": "stdio",
+        "command": "npx.cmd",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "C:\\Users\\kqtia\\OneDrive\\Desktop\\113522030\\projects\\mcp\\mcp_client_ollama"
+        ]        
+      },
+      "weather": {
+        "type": "sse",
+        "url": "http://localhost:8080/sse"
+      }
+    }
+}

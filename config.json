@@ -1,0 +1,27 @@
+{
+    "mcpServers": {
+
+      "weather": {
+        "type": "sse",
+        "url": "http://localhost:8080/sse"
+      },
+      "everything": {
+      "command": "npx.cmd",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ]
+    }
+    },
+    "llmProvider": {
+    "type": "ollama",
+    "model": "llama3.2:latest",
+    "url": "http://localhost:11434",
+    "parameters": {
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "top_k": 40,
+      "num_predict": 256
+    }
+  }
+}
