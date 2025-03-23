@@ -39,8 +39,8 @@ class ConfigLoader:
             default_config = {
                 "mcpServers": {},
                 "llmProvider": {
-                    "type": "anthropic",
-                    "model": "claude-3-5-sonnet-20240620"
+                    "type": "ollama",
+                    "model": "llama3"
                 }
             }
             with open(config_path, "w") as f:
@@ -89,8 +89,8 @@ class ConfigLoader:
             if "llmProvider" in config_data:
                 provider_config = config_data["llmProvider"]
                 llm_config = LLMProviderConfig(
-                    type=provider_config.get("type", "anthropic"),
-                    model=provider_config.get("model", "claude-3-5-sonnet-20240620"),
+                    type=provider_config.get("type", "ollama"),
+                    model=provider_config.get("model", "llama3"),
                     api_key=provider_config.get("api_key"),
                     url=provider_config.get("url"),
                     parameters=provider_config.get("parameters", {})

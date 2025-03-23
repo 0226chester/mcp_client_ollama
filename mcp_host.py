@@ -86,12 +86,7 @@ async def run_chat_session(
         # Override model if specified in command line
         elif model and llm_config:
             llm_config.model = model
-        
-        # Create Ollama provider
-        if llm_config.type.lower() != "ollama":
-            logger.warning(f"Provider type '{llm_config.type}' is not supported in this script. Defaulting to Ollama.")
-            llm_config.type = "ollama"
-            
+                   
         # Create Ollama provider
         llm_provider = OllamaProvider(
             model=llm_config.model,
@@ -204,10 +199,7 @@ def update_config_with_provider_info(
             
         # Set default model if needed
         if "model" not in config["llmProvider"]:
-            if provider_type == "anthropic":
-                config["llmProvider"]["model"] = "claude-3-5-sonnet-20240620"
-            elif provider_type == "ollama":
-                config["llmProvider"]["model"] = "llama3"
+            config["llmProvider"]["model"] = "llama3"
                 
         # Write updated config
         with open(config_path, "w") as f:
@@ -230,7 +222,7 @@ def main():
     
     # Provider selection
     provider_group = parser.add_argument_group("Provider Selection")
-    provider_group.add_argument("--provider", choices=["anthropic", "ollama"], 
+    provider_group.add_argument("--provider", choices=["ollama"], 
                               help="Select LLM provider")
     
     # Ollama-specific options
