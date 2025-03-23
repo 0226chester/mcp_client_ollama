@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import logging
+import time
 from typing import Dict, List, Any
 
 logger = logging.getLogger("mcp-host")
@@ -145,32 +146,56 @@ class StdioClient:
             logger.debug(f"Sent notification to {self.name}, no response expected")
             return {}
         
+        # Store the request ID for matching with responses
+        request_id = message.get("id")
+        
         # Add timeout to prevent hanging
-        try:
-            response_line = await asyncio.wait_for(
-                self.process.stdout.readline(), 
-                timeout=10.0  # 10 second timeout
-            )
-            
+        start_time = time.time()
+        timeout = 10.0  # 10 second timeout
+        
+        # Keep reading lines until we get a proper response matching our request ID
+        while time.time() - start_time < timeout:
             try:
-                response = json.loads(response_line.decode())
-                logger.debug(f"Parsed response from {self.name}: {response}")
+                response_line = await asyncio.wait_for(
+                    self.process.stdout.readline(), 
+                    timeout=2.0  # Shorter timeout for each read attempt
+                )
                 
-                # Validate JSON-RPC response structure
-                if "jsonrpc" not in response or response.get("jsonrpc") != "2.0":
-                    logger.warning(f"Response from {self.name} is missing required JSON-RPC version field")
+                if not response_line:
+                    continue  # Skip empty lines
                     
-                if "id" in message and ("id" not in response or response["id"] != message["id"]):
-                    logger.warning(f"Response id {response.get('id')} doesn't match request id {message['id']}")
-                
-                return response
-            except json.JSONDecodeError as e:
-                logger.error(f"Error parsing response from {self.name}: {str(e)}")
-                logger.debug(f"Raw response content: {response_line}")
-                raise
-        except asyncio.TimeoutError:
-            logger.error(f"Timeout waiting for response from {self.name}")
-            raise
+                try:
+                    response = json.loads(response_line.decode())
+                    logger.debug(f"Received message from {self.name}: {response}")
+                    
+                    # Check if this is a notification (no id field)
+                    if "id" not in response and "method" in response:
+                        # Handle notification separately
+                        logger.debug(f"Received notification: {response['method']}")
+                        # You might want to store notifications somewhere or process them
+                        continue  # Continue waiting for the actual response
+                    
+                    # Check if this is our response (matching id)
+                    if "id" in response and response["id"] == request_id:
+                        logger.debug(f"Matched response with request id: {request_id}")
+                        return response
+                    
+                    # If we got here, we received a response for a different request
+                    # This should be rare but possible in asynchronous environments
+                    logger.warning(f"Received response with non-matching ID. Expected {request_id}, got {response.get('id')}")
+                    
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error parsing message from {self.name}: {str(e)}")
+                    logger.debug(f"Raw message content: {response_line}")
+                    continue
+                    
+            except asyncio.TimeoutError:
+                # This is just a timeout for a single read attempt, not the overall timeout
+                continue
+        
+        # If we get here, we've timed out waiting for a matching response
+        logger.error(f"Timeout waiting for response with ID {request_id} from {self.name}")
+        raise TimeoutError(f"Timeout waiting for response from {self.name}")
         
     # Add this in stdio_client.py
     async def _safe_close_transport(self, transport):

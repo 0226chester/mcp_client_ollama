@@ -172,23 +172,34 @@ class SSEClient:
             logger.debug(f"Waiting for response to request {request_id}")
             
             while time.time() - start_time < timeout:
-                # Check if we already have matching events in the queue
-                queue_size = self.event_queue.qsize()
-                for _ in range(queue_size):
+                try:
+                    # Wait for a message with a short timeout
                     try:
-                        event = self.event_queue.get_nowait()
-                        
-                        if "id" in event and event["id"] == request_id:
-                            logger.debug(f"Found matching response for request {request_id}")
-                            return event
-                        
-                        # Put non-matching events back in the queue
-                        await self.event_queue.put(event)
-                    except asyncio.QueueEmpty:
-                        break
-                
-                # Wait a bit before checking again
-                await asyncio.sleep(0.1)
+                        event = await asyncio.wait_for(self.event_queue.get(), timeout=0.5)
+                    except asyncio.TimeoutError:
+                        # No message yet, keep waiting
+                        continue
+                    
+                    # Check if this is a notification
+                    if "id" not in event and "method" in event:
+                        logger.debug(f"Received notification: {event['method']}")
+                        # Process notification if needed
+                        continue
+                    
+                    # Check if this matches our request
+                    if "id" in event and event["id"] == request_id:
+                        logger.debug(f"Found matching response for request {request_id}")
+                        return event
+                    
+                    # If we get here, we received a response for a different request
+                    # Put it back in the queue for other waiters
+                    await self.event_queue.put(event)
+                    
+                    # Wait a bit before checking again
+                    await asyncio.sleep(0.1)
+                except asyncio.QueueEmpty:
+                    # Wait a bit before checking again
+                    await asyncio.sleep(0.1)
             
             raise TimeoutError(f"Timeout waiting for response to request {request_id}")
         except Exception as e:
