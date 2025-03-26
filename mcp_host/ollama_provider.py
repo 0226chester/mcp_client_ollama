@@ -252,8 +252,39 @@ class OllamaProvider:
         """Determine if the current model supports function calling."""
         # Models known to have function calling capability
         function_capable_models = [
-            "llama3", "mistral", "mixtral", "gemma", "phi3",
-            "neural-chat", "openchat", "wizard", "qwen"
+            "qwq",
+            "llama3.3",
+            "llama3.2",
+            "llama3.1",
+            "mistral",
+            "qwen2.5",
+            "qwen2.5-coder",
+            "qwen2",
+            "mistral-nemo",
+            "mixtral",
+            "smollm2",
+            "mistral-small",
+            "command-r",
+            "hermes3",
+            "mistral-large",
+            "command-r-plus",
+            "granite3.1-dense",
+            "phi4-mini",
+            "athene-v2",
+            "nemotron-mini",
+            "nemotron",
+            "granite3-dense",
+            "llama3-groq-tool-use",
+            "granite3.2",
+            "aya-expanse",
+            "granite3-moe",
+            "granite3.1-moe",
+            "granite3.2-vision",
+            "command-r7b",
+            "firefunction-v2",
+            "command-r7b-arabic",
+            "command-a",
+            "command-r7b-2",
         ]
         
         model_lower = self.model.lower()
